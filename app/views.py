@@ -7,10 +7,12 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.core.serializers.json import DjangoJSONEncoder
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from PIL import Image
 from app.forms import ReportForm, ReportSucessForm, FilterForm
 from app.models import Report, ReportImage
+from app.serializers import ReportSerializer
 from app.utils import tweet, post_instagram_facebook
 
 
@@ -289,3 +291,21 @@ def report(request, report_id):
         return render(request, 'reporte.html', context)
     else:
         return render(request, '404.html')
+
+
+def report_list(request):
+
+    reports = Report.objects.all()
+
+    paginator = Paginator(reports, 15)  # Show 15 reports per page.
+
+    page_number = request.GET.get('page')
+
+    if page_number == 0:
+        page_number = 1
+
+    page_obj = paginator.get_page(page_number)
+
+    serializer = ReportSerializer(page_obj, many=True)
+
+    return JsonResponse(serializer.data, safe=False)
